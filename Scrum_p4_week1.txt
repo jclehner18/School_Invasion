@@ -1,0 +1,10 @@
+Project 4: Invader Space
+Scrum Master: Jack Lehner
+Team Members: Nik Pensyl, Jack Lehner, Evan Dickerson
+
+
+Week 1:
+Documentation
+Come up with creative idea.. Professor theme (lives are us - complete homework) 
+Create repo
+find assets
