@@ -82,6 +82,7 @@ private:
     QImage EnemyShot;
     QImage background;
     QImage desk;
+    QImage chalkboard;
 
     const int start_width=800;
     const int start_height=900;
@@ -131,7 +132,9 @@ private:
     bool pause = false;
 
     int levelUpScreen = 0;
+    int gameOverScreen = 0;
 
+    QString name ="";
 
 private slots:
     void painting();

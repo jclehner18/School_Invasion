@@ -29,6 +29,7 @@ void MainWindow::loadImages() {
     MainShot.load("../MainShot.png");
     EnemyShot.load("../EnemyShot.png");
     desk.load("../desk.png");
+    chalkboard.load("../chalkboard.jpg");
 
     Carr = Carr.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
 
@@ -57,7 +58,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
     QPainter p(this);
     //Make sure to make the images smaller
 
-    if(ingame) {
+    if(ingame && gameOverScreen <= 50) {
         p.drawImage(0, 0, background);
         QFont font("Courier", 30, QFont::DemiBold);
         p.setPen(Qt::white);
@@ -85,7 +86,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             p.drawImage(barriers[i].x, barriers[i].y, barriers[i].img);
         }
 
-        if(start && !pause) {
+        if(start && !pause && !gameover) {
             p.drawImage(player_x, player_y, Carr);
             if(moveFrame==0) {
                 moveEnemies();
@@ -111,21 +112,36 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                     levelUpScreen = 0;
                 }
             }
-        } else if(!start) {
+        } else if(!start && !gameover) {
             QFontMetrics fm(font);
             p.setPen(Qt::black);
             QString startgamestr = "Press Space to Start";
             p.drawText(gamewidth/2-fm.horizontalAdvance(startgamestr)/2, gameheight/2, startgamestr);
-        } else if(start && pause) {
+        } else if(start && pause && !gameover) {
             QFont font("Courier", 80, QFont::DemiBold);
             p.setPen(Qt::red);
             p.setFont(font);
             QFontMetrics fm(font);
             QString pausestr = "Paused";
             p.drawText(gamewidth/2-fm.horizontalAdvance(pausestr)/2, gameheight/2, pausestr);
+        } else if(start && gameover)  {
+            QFont font("Courier", 80, QFont::DemiBold);
+            p.setPen(Qt::red);
+            p.setFont(font);
+            QFontMetrics fm(font);
+            QString gamestr = "Game Over";
+            p.drawText(gamewidth/2-fm.horizontalAdvance(gamestr)/2, gameheight/2, gamestr);
+            gameOverScreen++;
         }
+    } else if(gameover && ingame) {
+        setFixedSize(1100, 800);
+        p.drawImage(0, 0, chalkboard);
+        ifstream infile;
+        string txt;
+        infile.open("../highScores.txt");
+        while(getline(infile, txt)) {
 
-
+        }
     }
 }
 
@@ -136,7 +152,7 @@ void MainWindow::makeLevel() {
         enemies.push_back(makeEnemy(Mitofsky, i*70+70, 220, 40));
         enemies.push_back(makeEnemy(Carroll, i*70+70, 280, 30));
         enemies.push_back(makeEnemy(Carr, i*70+70, 340, 20));
-        enemies.push_back(makeEnemy(Woolverton, i*70+70, 400, 10));
+        enemies.push_back(makeEnemy(Woolverton, i*70+70, 630, 10));
     }
     level++;
     movement = 50/2-level*4;
@@ -168,7 +184,7 @@ void MainWindow::moveEnemies() {
         for(int i = 0; i<enemies.size(); i++) {
             enemies[i].y += 30;
             if(enemies[i].y+enemies[i].hieght>=gameheight-200) {
-                pause = true;
+                gameover = true;
             } else if(movement>5) {
                 movement -=1;
             }
