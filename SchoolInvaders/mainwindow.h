@@ -117,6 +117,7 @@ private:
     void getHighScores();
     void setHighScores();
     void getScreenText();
+    void Rainbow();
 
     int speed = 1000/50;
     int moveFrame;
@@ -151,6 +152,7 @@ private:
     bool instructions = false;
     int mainScreen = 0;
     bool main = true;
+    int selected = -1;
 
     string highScoreNames[10];
     int highScores[10];
@@ -163,6 +165,8 @@ private:
     bool donenaming = false;
 
     int blinking = 0;
+
+    int Rain = QColor(0, 150, 0).hue();
 
 private slots:
     void painting();

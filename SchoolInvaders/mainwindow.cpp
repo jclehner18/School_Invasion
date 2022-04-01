@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     repaint();
     grabKeyboard();
     grabMouse();
+    setMouseTracking(true);
     player_width = player_img.width();
     player_height = player_img.height();
     makeBarriers();
@@ -149,7 +150,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             p.drawImage(player_x, player_y, Carr);
             if(moveFrame==0) {
                 moveEnemies();
-                moveFrame = movement;        
+                moveFrame = movement;
                 if(AnimateEnemies==5) {
                     AnimateEnemies=0;
                 } else {
@@ -160,7 +161,6 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             }
             moveShoot();
             cooldown--;
-            qDebug() <<enemies.size();
             if(enemies.size()==0) {
                 if(levelUpScreen<50) {
                     shots.clear();
@@ -244,7 +244,6 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                     p.drawText(0, i*40+50, Qtxt);
                     txt = "";
                 }
-            qDebug() << mainScreen;
             mainScreen ++;
         } else {
             QColor col = Qt::green;
@@ -252,10 +251,22 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             p.setBrush(col);
             for(int i = 0; i<screenlines.size(); i++) {
                 QString Qtxt = QString::fromStdString(screenlines[i]);
-
+                if(i==selected) {
+                    Rainbow();
+                    p.setPen(QColor::fromHsv(Rain, 255, 255, 255));
+                } else {
+                    p.setPen(QColor(0, 150, 0));
+                }
                 p.drawText(0, i*40+50, Qtxt);
             }
         }
+    }
+}
+
+void MainWindow::Rainbow() {
+    Rain += 2;
+    if(Rain>=360) {
+        Rain = Rain%360;
     }
 }
 
@@ -376,6 +387,115 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
         }
     } else if(ingame && gameover && naming && !donenaming && name.length()<8) {
         switch(key) {
+            case Qt::Key_Shift: {
+                switch(key) {
+                    case Qt::Key_A: {
+                       name +="A";
+                       break;
+                    }
+                    case Qt::Key_B: {
+                       name +="B";
+                       break;
+                    }
+                    case Qt::Key_C: {
+                       name +="C";
+                       break;
+                    }
+                    case Qt::Key_D: {
+                       name +="D";
+                       break;
+                    }
+                    case Qt::Key_E: {
+                       name +="E";
+                       break;
+                    }
+                    case Qt::Key_F: {
+                       name +="F";
+                       break;
+                    }
+                    case Qt::Key_G: {
+                       name +="G";
+                       break;
+                    }
+                    case Qt::Key_H: {
+                       name +="H";
+                       break;
+                    }
+                    case Qt::Key_I: {
+                       name +="I";
+                       break;
+                    }
+                    case Qt::Key_J: {
+                       name +="J";
+                       break;
+                    }
+                    case Qt::Key_K: {
+                       name +="K";
+                       break;
+                    }
+                    case Qt::Key_L: {
+                       name +="L";
+                       break;
+                    }
+                    case Qt::Key_M: {
+                       name +="M";
+                       break;
+                    }
+                    case Qt::Key_N: {
+                       name +="N";
+                       break;
+                    }
+                    case Qt::Key_O: {
+                       name +="O";
+                       break;
+                    }
+                    case Qt::Key_P: {
+                       name +="P";
+                       break;
+                    }
+                    case Qt::Key_Q: {
+                       name +="Q";
+                       break;
+                    }
+                    case Qt::Key_R: {
+                       name +="R";
+                       break;
+                    }
+                    case Qt::Key_S: {
+                       name +="S";
+                       break;
+                    }
+                    case Qt::Key_T: {
+                       name +="T";
+                       break;
+                    }
+                    case Qt::Key_U: {
+                       name +="u";
+                       break;
+                    }
+                    case Qt::Key_V: {
+                       name +="V";
+                       break;
+                    }
+                    case Qt::Key_W: {
+                       name +="W";
+                       break;
+                    }
+                    case Qt::Key_X: {
+                       name +="X";
+                       break;
+                    }
+                    case Qt::Key_Y: {
+                       name +="Y";
+                       break;
+                    }
+                    case Qt::Key_Z: {
+                       name +="Z";
+                       break;
+                    }
+                }
+                break;
+            }
             case Qt::Key_A: {
                name +="a";
                break;
@@ -516,39 +636,54 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 void MainWindow::mousePressEvent(QMouseEvent *e) {
    int mousey = e->y();
    int mousex= e->x();
-   qDebug() << "test";
-    if(e->buttons()==Qt::LeftButton && mousey>=9*40+30 && mousey<=9*40+110 && main) {
-        setFixedSize(gamewidth, gameheight);
-        ingame = true;
-        level = 8;
-        makeLevel();
-        start = false;
-        gameover = false;
-        gameOverScreen = 0;
-        player_x = 250;
-        player_y = gameheight-100;
-        score = 2450;
-        timer->start(speed);
-        donenaming = false;
-        naming = false;
-        leftdir = false;
-        main = false;
-        name ="";
-    } else if(e->buttons()==Qt::LeftButton && mousey>=11*40+30 && mousey<=11*40+110 && main) {
-        main = false;
-        instructions = true;
-    } else if (e->buttons()==Qt::LeftButton && mousey>=13*40+30 && mousey<=13*40+110 && main) {
-        ingame = true;
-        gameover = true;
-        gameOverScreen = 100;
-        main = false;
-    } else if(e->buttons()==Qt::LeftButton && mousey>=15*40+30 && mousey<=15*40+110 && main) {
-        qApp->exit(0);
-    }
+   if(mainScreen-1>=characters*2) {
+       if(e->buttons()==Qt::LeftButton && mousey>=9*40+30 && mousey<=9*40+110 && main) {
+           setFixedSize(gamewidth, gameheight);
+           ingame = true;
+           level = 8;
+           makeLevel();
+           start = false;
+           gameover = false;
+           gameOverScreen = 0;
+           player_x = 250;
+           player_y = gameheight-100;
+           score = 2450;
+           donenaming = false;
+           naming = false;
+           leftdir = false;
+           main = false;
+           name ="";
+           moveFrame = movement;
+       } else if(e->buttons()==Qt::LeftButton && mousey>=11*40+30 && mousey<=11*40+110 && main) {
+           main = false;
+           instructions = true;
+       } else if (e->buttons()==Qt::LeftButton && mousey>=13*40+30 && mousey<=13*40+110 && main) {
+           ingame = true;
+           gameover = true;
+           gameOverScreen = 100;
+           main = false;
+       } else if(e->buttons()==Qt::LeftButton && mousey>=15*40+30 && mousey<=15*40+110 && main) {
+           qApp->exit(0);
+       }
+   }
+
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *e) {
-
+   int mousey = e->y();
+   if(mousey>=11*40+30 && mousey<11*40+110 && selected!=12) {
+       selected = 12;
+       Rain = QColor(0, 150, 0).hue();
+    } else if(mousey>=13*40+30 && mousey<13*40+110 && selected!=14) {
+        selected = 14;
+        Rain = QColor(0, 150, 0).hue();
+    } else if(mousey>=15*40+30 && mousey<15*40+110&& selected!=16) {
+        selected = 16;
+        Rain = QColor(0, 150, 0).hue();
+    } if(mousey>=9*40+30 && mousey<9*40+110&& selected!=10) {
+        selected = 10;
+        Rain = QColor(0, 150, 0).hue();
+    }
 }
 
 MainWindow::~MainWindow()

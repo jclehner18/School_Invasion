@@ -1,3 +1,7 @@
+alex
+6650
+spencer
+4580
 testtwo
 3300
 testone
@@ -14,7 +18,3 @@ yes
 2450
 Nik
 1940
-Nik
-1840
-Nik
-1740
