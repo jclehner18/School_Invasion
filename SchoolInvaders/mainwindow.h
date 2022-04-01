@@ -24,7 +24,8 @@ QT_END_NAMESPACE
 using namespace std;
 
 struct enemy  {
-    QImage en;
+    QImage *en;
+    QImage *en_rev;
     int pointval;
     int x;
     int y;
@@ -37,7 +38,7 @@ struct shot {
     int y;
     int width;
     int hieght;
-    QImage sho_img;
+    QImage *sho_img;
 };
 
 struct enemy_shot {
@@ -45,7 +46,7 @@ struct enemy_shot {
     int y;
     int width;
     int hieght;
-    QImage sho_img;
+    QImage *sho_img;
 };
 
 struct barrier {
@@ -77,6 +78,12 @@ private:
     QImage Mitofsky;
     QImage Carroll;
     QImage Woolverton;
+    QImage Khadka_rev;
+    QImage Sharma_rev;
+    QImage Carr_rev;
+    QImage Mitofsky_rev;
+    QImage Carroll_rev;
+    QImage Woolverton_rev;
     QImage MainShot;
     QImage player_img;
     QImage EnemyShot;
@@ -98,12 +105,14 @@ private:
     vector<barrier> barriers;
 
     void moveEnemies();
-    enemy makeEnemy(QImage img, int x, int y, int pointVal);
+    enemy makeEnemy(QImage *img, QImage *img_rev, int x, int y, int pointVal);
     void makeLevel();
     void moveShoot();
     bool checkCollision(enemy *en, shot *sh);
     bool checkEnCollision(enemy_shot *enshot);
     void makeBarriers();
+    void getHighScores();
+    void setHighScores();
 
     int speed = 1000/50;
     int moveFrame;
@@ -117,6 +126,8 @@ private:
     bool leftdir=false;
     const int leftboundry = 50;
     const int rightboundry = gamewidth-50;
+
+    int AnimateEnemies = 0;
 
     int player_x=200;
     int player_y=gameheight-200;
@@ -134,10 +145,19 @@ private:
     int levelUpScreen = 0;
     int gameOverScreen = 0;
 
-    QString name ="";
+    string highScoreNames[10];
+    int highScores[10];
+
+    string name ="";
+
+    bool naming = false;
+    bool donenaming = false;
+
+    int blinking = 0;
 
 private slots:
     void painting();
     void on_Beginbut_clicked();
+    void on_Mainbut_clicked();
 };
 #endif // MAINWINDOW_H

@@ -24,6 +24,7 @@ class Ui_MainWindow
 public:
     QWidget *centralwidget;
     QPushButton *Beginbut;
+    QPushButton *Mainbut;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -31,13 +32,17 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(800, 600);
+        MainWindow->resize(800, 900);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         Beginbut = new QPushButton(centralwidget);
         Beginbut->setObjectName(QString::fromUtf8("Beginbut"));
         Beginbut->setGeometry(QRect(220, 420, 271, 91));
         Beginbut->setAutoExclusive(false);
+        Mainbut = new QPushButton(centralwidget);
+        Mainbut->setObjectName(QString::fromUtf8("Mainbut"));
+        Mainbut->setGeometry(QRect(600, 20, 181, 51));
+        Mainbut->setAutoExclusive(false);
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
@@ -56,6 +61,7 @@ public:
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
         Beginbut->setText(QCoreApplication::translate("MainWindow", "Begin", nullptr));
+        Mainbut->setText(QCoreApplication::translate("MainWindow", "To Main Menu", nullptr));
     } // retranslateUi
 
 };

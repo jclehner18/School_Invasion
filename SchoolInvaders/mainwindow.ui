@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,6 +25,22 @@
     </property>
     <property name="text">
      <string>Begin</string>
+    </property>
+    <property name="autoExclusive">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="Mainbut">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>20</y>
+      <width>181</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>To Main Menu</string>
     </property>
     <property name="autoExclusive">
      <bool>false</bool>

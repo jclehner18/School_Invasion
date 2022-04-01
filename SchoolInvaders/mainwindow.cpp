@@ -1,6 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+//For the intro screen take a picture of a black background monitor
+//That has HTML code with a comment detailing to select one of the options in the unordered list
+//Also have an instructions tab that displays the instructions within comments of HTML code
+//Some how animate the selected option
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -15,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
     player_width = player_img.width();
     player_height = player_img.height();
     makeBarriers();
+    getHighScores();
+    ui->Mainbut->hide();
 }
 
 void MainWindow::loadImages() {
@@ -32,16 +39,49 @@ void MainWindow::loadImages() {
     chalkboard.load("../chalkboard.jpg");
 
     Carr = Carr.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
-
     Carroll = Carroll.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
-
     Khadka = Khadka.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
-
     Mitofsky = Mitofsky.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
-
     Sharma = Sharma.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
-
     Woolverton = Woolverton.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
+
+    Carr_rev = Carr.mirrored(true, false);
+    Carroll_rev = Carroll.mirrored(true, false);
+    Khadka_rev = Khadka.mirrored(true, false);
+    Mitofsky_rev = Mitofsky.mirrored(true, false);
+    Sharma_rev = Sharma.mirrored(true, false);
+    Woolverton_rev = Woolverton.mirrored(true, false);
+}
+
+void MainWindow::getHighScores() {
+    ifstream infile;
+    string txt;
+    infile.open("../highScores.txt");
+    int i = 0;
+    while(getline(infile, txt) && i<20) {
+        if(i%2==0) {
+           highScoreNames[i/2] = txt;
+        } else {
+            highScores[i/2] = stoi(txt);
+        }
+        i++;
+    }
+    infile.close();
+}
+
+void MainWindow::setHighScores() {
+    ofstream ofile;
+    ofile.open("../highScores.txt");
+    for(int i =0, j=0; i<10; i++) {
+        if(j==0 && score>highScores[i]) {
+            ofile<<name<<endl<<to_string(score)<<endl;
+            j++;
+        } else {
+            ofile<<highScoreNames[i-j]<<endl<<to_string(highScores[i-j])<<endl;
+        }
+    }
+    ofile.close();
+    getHighScores();
 }
 
 void MainWindow::makeBarriers() {
@@ -74,23 +114,32 @@ void MainWindow::paintEvent(QPaintEvent *e) {
 
         //Draw Objects
         for(int i = 0; i<enemies.size(); i++) {
-            p.drawImage(enemies[i].x, enemies[i].y, enemies[i].en);
+            if(AnimateEnemies>=3) {
+                p.drawImage(enemies[i].x, enemies[i].y, *enemies[i].en_rev);
+            } else {
+                p.drawImage(enemies[i].x, enemies[i].y, *enemies[i].en);
+            }
         }
         for(int i = 0; i<shots.size(); i++) {
-            p.drawImage(shots[i].x, shots[i].y, shots[i].sho_img);
+            p.drawImage(shots[i].x, shots[i].y, *shots[i].sho_img);
         }
         for(int i =0; i<enshots.size(); i++) {
-            //p.drawImage(enshots[i].x, enshots[i].y, enshots[i].sho_img);
+            //p.drawImage(enshots[i].x, enshots[i].y, *enshots[i].sho_img);
         }
         for(int i =0; i<barriers.size(); i++) {
+            //Destroy barriers in 5 chunks of 26
             p.drawImage(barriers[i].x, barriers[i].y, barriers[i].img);
         }
-
         if(start && !pause && !gameover) {
             p.drawImage(player_x, player_y, Carr);
             if(moveFrame==0) {
                 moveEnemies();
-                moveFrame = movement;
+                moveFrame = movement;        
+                if(AnimateEnemies==5) {
+                    AnimateEnemies=0;
+                } else {
+                    AnimateEnemies++;
+                }
             } else {
                 moveFrame--;
             }
@@ -136,23 +185,48 @@ void MainWindow::paintEvent(QPaintEvent *e) {
     } else if(gameover && ingame) {
         setFixedSize(1100, 800);
         p.drawImage(0, 0, chalkboard);
-        ifstream infile;
+        QFont font("Courier", 30, QFont::DemiBold);
+        p.setPen(Qt::white);
+        p.setFont(font);
+        QFontMetrics fm(font);
+        QString gamestr = "High Scores";
+        p.drawText(gamewidth/2-fm.horizontalAdvance(gamestr)/2, 80, gamestr);
         string txt;
-        infile.open("../highScores.txt");
-        while(getline(infile, txt)) {
+        QString text;
+        for(int i =0, j = 0; i<10; i++) {
+            if(highScores[i]<score && j==0) {
+                naming = true;
+                txt = name + ": " + to_string(score);
+                text = QString::fromStdString(txt);
+                QString textname = QString::fromStdString(name);
+                j++;
+                if(!donenaming) {
+                    blinking++;
+                    if(blinking<=20) {
+                        p.setBrush(Qt::white);
+                        p.drawRect(gamewidth/2-fm.horizontalAdvance(text)/2+fm.horizontalAdvance(textname), i*65+120, 10, 50);
 
+                    } else if(blinking==40) {
+                        blinking=0;
+                    }
+                }
+            } else {
+                txt = highScoreNames[i-j] + ": " + to_string(highScores[i-j]);
+                text = QString::fromStdString(txt);
+            }
+            p.drawText(gamewidth/2-fm.horizontalAdvance(text)/2, i*65+150, text);
         }
     }
 }
 
 void MainWindow::makeLevel() {
     for(int i = 0; i<11; i++) {
-        enemies.push_back(makeEnemy(Khadka, i*70+70, 100, 60));
-        enemies.push_back(makeEnemy(Sharma, i*70+70, 160, 50));
-        enemies.push_back(makeEnemy(Mitofsky, i*70+70, 220, 40));
-        enemies.push_back(makeEnemy(Carroll, i*70+70, 280, 30));
-        enemies.push_back(makeEnemy(Carr, i*70+70, 340, 20));
-        enemies.push_back(makeEnemy(Woolverton, i*70+70, 630, 10));
+        enemies.push_back(makeEnemy(&Khadka, &Khadka_rev, i*70+70, 100, 60));
+        enemies.push_back(makeEnemy(&Sharma, &Sharma_rev, i*70+70, 160, 50));
+        enemies.push_back(makeEnemy(&Mitofsky, &Mitofsky_rev, i*70+70, 220, 40));
+        enemies.push_back(makeEnemy(&Carroll, &Carroll_rev, i*70+70, 280, 30));
+        enemies.push_back(makeEnemy(&Carr, &Carr_rev, i*70+70, 340, 20));
+        enemies.push_back(makeEnemy(&Woolverton, &Woolverton_rev, i*70+70, 420, 10));
     }
     level++;
     movement = 50/2-level*4;
@@ -161,13 +235,14 @@ void MainWindow::makeLevel() {
     }
 }
 
-enemy MainWindow::makeEnemy(QImage img, int x, int y, int pointVal) {
+enemy MainWindow::makeEnemy(QImage *img, QImage *img_rev, int x, int y, int pointVal) {
     enemy en;
     en.en = img;
+    en.en_rev = img_rev;
     en.x = x;
     en.y = y;
-    en.width = en.en.width();
-    en.hieght = en.en.height();
+    en.width = en.en->width();
+    en.hieght = en.en->height();
     en.pointval = pointVal;
     return en;
 }
@@ -242,19 +317,145 @@ bool MainWindow::checkEnCollision(enemy_shot *enshot) {
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
     int key = event->key();
-    switch(key) {
-        case Qt::Key_Left: {
-            if(player_x>10) {
-                player_x -=5;
+    if(start && !gameover) {
+        switch(key) {
+            case Qt::Key_Left: {
+                if(player_x>10) {
+                    player_x -=5;
+                }
+               break;
             }
-           break;
-        }
-        case Qt::Key_Right: {
-            if(player_x<gamewidth-10) {
-                player_x +=5;
+            case Qt::Key_Right: {
+                if(player_x<gamewidth-10) {
+                    player_x +=5;
+                }
+                break;
             }
-            break;
         }
+
+        if(key==Qt::Key_P && ingame) {
+            pause = !pause;
+        }
+    } else if(ingame && gameover && naming && !donenaming && name.length()<8) {
+        switch(key) {
+            case Qt::Key_A: {
+               name +="a";
+               break;
+            }
+            case Qt::Key_B: {
+               name +="b";
+               break;
+            }
+            case Qt::Key_C: {
+               name +="c";
+               break;
+            }
+            case Qt::Key_D: {
+               name +="d";
+               break;
+            }
+            case Qt::Key_E: {
+               name +="e";
+               break;
+            }
+            case Qt::Key_F: {
+               name +="f";
+               break;
+            }
+            case Qt::Key_G: {
+               name +="g";
+               break;
+            }
+            case Qt::Key_H: {
+               name +="h";
+               break;
+            }
+            case Qt::Key_I: {
+               name +="i";
+               break;
+            }
+            case Qt::Key_J: {
+               name +="j";
+               break;
+            }
+            case Qt::Key_K: {
+               name +="k";
+               break;
+            }
+            case Qt::Key_L: {
+               name +="l";
+               break;
+            }
+            case Qt::Key_M: {
+               name +="m";
+               break;
+            }
+            case Qt::Key_N: {
+               name +="n";
+               break;
+            }
+            case Qt::Key_O: {
+               name +="o";
+               break;
+            }
+            case Qt::Key_P: {
+               name +="p";
+               break;
+            }
+            case Qt::Key_Q: {
+               name +="q";
+               break;
+            }
+            case Qt::Key_R: {
+               name +="r";
+               break;
+            }
+            case Qt::Key_S: {
+               name +="s";
+               break;
+            }
+            case Qt::Key_T: {
+               name +="t";
+               break;
+            }
+            case Qt::Key_U: {
+               name +="u";
+               break;
+            }
+            case Qt::Key_V: {
+               name +="v";
+               break;
+            }
+            case Qt::Key_W: {
+               name +="w";
+               break;
+            }
+            case Qt::Key_X: {
+               name +="x";
+               break;
+            }
+            case Qt::Key_Y: {
+               name +="y";
+               break;
+            }
+            case Qt::Key_Z: {
+               name +="z";
+               break;
+            }
+        }
+    }
+
+    if(naming && gameover && key==Qt::Key_Space && !donenaming && name.length()>0) {
+        naming = false;
+        donenaming = true;
+        setHighScores();
+        score = 0;
+        ui->Mainbut->show();
+    } else if(naming && gameover && key==Qt::Key_Backspace && !donenaming && name.length()>0) {
+        name = name.substr(0, name.length()-1);
+    }
+    if(!naming && gameover) {
+        ui->Mainbut->show();
     }
 
     if(key==Qt::Key_Space) {
@@ -263,17 +464,14 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
             start=true;
         } else if(ingame && start && cooldown<=0 && enemies.size()>=0) {
             shot sho;
-            sho.sho_img = MainShot;
+            sho.sho_img = &MainShot;
             sho.x = player_x + player_width/2;
             sho.y = player_y;
-            sho.width = sho.sho_img.width();
-            sho.hieght = sho.sho_img.height();
+            sho.width = sho.sho_img->width();
+            sho.hieght = sho.sho_img->height();
             shots.push_back(sho);
             cooldown=COOLDOWN_LENGTH;
         }
-    }
-    if(key==Qt::Key_P && ingame && start) {
-        pause = !pause;
     }
 }
 
@@ -290,8 +488,28 @@ void MainWindow::on_Beginbut_clicked() {
     level = 8;
     makeLevel();
     start = false;
+    gameover = false;
+    gameOverScreen = 0;
     player_x = 250;
     player_y = gameheight-100;
+    score = 2450;
     timer->start(speed);
+    donenaming = false;
+    naming = false;
+    name ="";
+
+}
+
+
+void MainWindow::on_Mainbut_clicked() {
+    ui->Beginbut->show();
+    ui->Mainbut->hide();
+    ingame = false;
+    start = false;
+    gameover = false;
+    enemies.clear();
+    shots.clear();
+    enshots.clear();
+    enemiesDown = false;
 }
 
