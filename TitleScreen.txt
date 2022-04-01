@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    		<title>School Invasion</title>
+
+  </head>
+  <body>
+    <ul>
+
+      		 <li>Start Game</li>
+
+      		<li>Instructions</li>
+
+      		 <li>High Scores</li>
+
+      		     <li>Exit</li>
+
+    </ul>  
+  </body>
+</html>

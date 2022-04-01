@@ -6,6 +6,8 @@
 //Also have an instructions tab that displays the instructions within comments of HTML code
 //Some how animate the selected option
 
+//Add music at some point
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -17,11 +19,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timer, SIGNAL(timeout()), this, SLOT(painting()));
     repaint();
     grabKeyboard();
+    grabMouse();
     player_width = player_img.width();
     player_height = player_img.height();
     makeBarriers();
     getHighScores();
     ui->Mainbut->hide();
+    getScreenText();
+    timer->start(speed);
 }
 
 void MainWindow::loadImages() {
@@ -51,6 +56,17 @@ void MainWindow::loadImages() {
     Mitofsky_rev = Mitofsky.mirrored(true, false);
     Sharma_rev = Sharma.mirrored(true, false);
     Woolverton_rev = Woolverton.mirrored(true, false);
+}
+
+void MainWindow::getScreenText() {
+    ifstream infile;
+    string txt;
+    infile.open("../TitleScreen.txt");
+    while(getline(infile, txt)) {
+        screenlines.push_back(txt);
+        characters += txt.length();
+    }
+    infile.close();
 }
 
 void MainWindow::getHighScores() {
@@ -97,18 +113,17 @@ void MainWindow::makeBarriers() {
 void MainWindow::paintEvent(QPaintEvent *e) {
     QPainter p(this);
     //Make sure to make the images smaller
-
+    QFont font("Courier", 30, QFont::DemiBold);
+    p.setPen(Qt::white);
+    p.setFont(font);
+    QFontMetrics fm(font);
     if(ingame && gameOverScreen <= 50) {
         p.drawImage(0, 0, background);
-        QFont font("Courier", 30, QFont::DemiBold);
-        p.setPen(Qt::white);
-        p.setFont(font);
         QString Player_score = "Score: " + QString::fromStdString(to_string(score));
         p.drawText(110, 56, Player_score);
         QString levelstr = "Level: " + QString::fromStdString(to_string(level));
         p.drawText(870, 56, levelstr);
-        //QString highstr = "High Score: " + QString::fromStdString(to_string(highscore));
-        QString highstr = "High Score: 1000";
+        QString highstr = "High Score: " + QString::fromStdString(to_string(highScores[0]));
         p.drawText(400, 56, highstr);
 
 
@@ -165,7 +180,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             QFontMetrics fm(font);
             p.setPen(Qt::black);
             QString startgamestr = "Press Space to Start";
-            p.drawText(gamewidth/2-fm.horizontalAdvance(startgamestr)/2, gameheight/2, startgamestr);
+            p.drawText(gamewidth/2-fm.horizontalAdvance(startgamestr)/2, gameheight/2+100, startgamestr);
         } else if(start && pause && !gameover) {
             QFont font("Courier", 80, QFont::DemiBold);
             p.setPen(Qt::red);
@@ -179,16 +194,12 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             p.setFont(font);
             QFontMetrics fm(font);
             QString gamestr = "Game Over";
-            p.drawText(gamewidth/2-fm.horizontalAdvance(gamestr)/2, gameheight/2, gamestr);
+            p.drawText(gamewidth/2-fm.horizontalAdvance(gamestr)/2, gameheight/2+100, gamestr);
             gameOverScreen++;
         }
     } else if(gameover && ingame) {
         setFixedSize(1100, 800);
         p.drawImage(0, 0, chalkboard);
-        QFont font("Courier", 30, QFont::DemiBold);
-        p.setPen(Qt::white);
-        p.setFont(font);
-        QFontMetrics fm(font);
         QString gamestr = "High Scores";
         p.drawText(gamewidth/2-fm.horizontalAdvance(gamestr)/2, 80, gamestr);
         string txt;
@@ -215,6 +226,35 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                 text = QString::fromStdString(txt);
             }
             p.drawText(gamewidth/2-fm.horizontalAdvance(text)/2, i*65+150, text);
+        }
+    } else if(!instructions && !ingame) {
+        p.setBrush(Qt::black);
+        p.drawRect(0, 0, start_width, start_height);
+        p.setPen(QColor(0, 150, 0));
+        if(mainScreen<=characters*2) {
+                string txt;
+                QString Qtxt;
+                int count = 0;
+                for(int i = 0; i<screenlines.size() && count<mainScreen/2; i++) {
+                    for(int j=0; j<screenlines[i].length() && count<mainScreen/2; j++) {
+                        txt +=screenlines[i][j];
+                        count++;
+                    }
+                    Qtxt = QString::fromStdString(txt);
+                    p.drawText(0, i*40+50, Qtxt);
+                    txt = "";
+                }
+            qDebug() << mainScreen;
+            mainScreen ++;
+        } else {
+            QColor col = Qt::green;
+            col.setAlphaF(1);
+            p.setBrush(col);
+            for(int i = 0; i<screenlines.size(); i++) {
+                QString Qtxt = QString::fromStdString(screenlines[i]);
+
+                p.drawText(0, i*40+50, Qtxt);
+            }
         }
     }
 }
@@ -249,9 +289,7 @@ enemy MainWindow::makeEnemy(QImage *img, QImage *img_rev, int x, int y, int poin
 
 void MainWindow::painting() {
     repaint();
-    if(ingame) {
-        timer->start(speed);
-    }
+    timer->start(speed);
 }
 
 void MainWindow::moveEnemies() {
@@ -475,34 +513,50 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
     }
 }
 
+void MainWindow::mousePressEvent(QMouseEvent *e) {
+   int mousey = e->y();
+   int mousex= e->x();
+   qDebug() << "test";
+    if(e->buttons()==Qt::LeftButton && mousey>=9*40+30 && mousey<=9*40+110 && main) {
+        setFixedSize(gamewidth, gameheight);
+        ingame = true;
+        level = 8;
+        makeLevel();
+        start = false;
+        gameover = false;
+        gameOverScreen = 0;
+        player_x = 250;
+        player_y = gameheight-100;
+        score = 2450;
+        timer->start(speed);
+        donenaming = false;
+        naming = false;
+        leftdir = false;
+        main = false;
+        name ="";
+    } else if(e->buttons()==Qt::LeftButton && mousey>=11*40+30 && mousey<=11*40+110 && main) {
+        main = false;
+        instructions = true;
+    } else if (e->buttons()==Qt::LeftButton && mousey>=13*40+30 && mousey<=13*40+110 && main) {
+        ingame = true;
+        gameover = true;
+        gameOverScreen = 100;
+        main = false;
+    } else if(e->buttons()==Qt::LeftButton && mousey>=15*40+30 && mousey<=15*40+110 && main) {
+        qApp->exit(0);
+    }
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent *e) {
+
+}
+
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
-
-void MainWindow::on_Beginbut_clicked() {
-    ui->Beginbut->hide();
-    setFixedSize(gamewidth, gameheight);
-    ingame = true;
-    level = 8;
-    makeLevel();
-    start = false;
-    gameover = false;
-    gameOverScreen = 0;
-    player_x = 250;
-    player_y = gameheight-100;
-    score = 2450;
-    timer->start(speed);
-    donenaming = false;
-    naming = false;
-    name ="";
-
-}
-
-
 void MainWindow::on_Mainbut_clicked() {
-    ui->Beginbut->show();
     ui->Mainbut->hide();
     ingame = false;
     start = false;

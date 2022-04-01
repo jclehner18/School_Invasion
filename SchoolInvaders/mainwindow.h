@@ -14,6 +14,7 @@
 #include <QSound>
 #include <QDebug>
 #include <random>
+#include <QMouseEvent>
 
 
 QT_BEGIN_NAMESPACE
@@ -68,6 +69,8 @@ public:
 protected:
     void paintEvent(QPaintEvent *e);
     void keyPressEvent(QKeyEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+    void mouseMoveEvent(QMouseEvent *e);
 
 private:
     Ui::MainWindow *ui;
@@ -113,6 +116,7 @@ private:
     void makeBarriers();
     void getHighScores();
     void setHighScores();
+    void getScreenText();
 
     int speed = 1000/50;
     int moveFrame;
@@ -144,11 +148,16 @@ private:
 
     int levelUpScreen = 0;
     int gameOverScreen = 0;
+    bool instructions = false;
+    int mainScreen = 0;
+    bool main = true;
 
     string highScoreNames[10];
     int highScores[10];
 
     string name ="";
+    vector<string> screenlines;
+    int characters = 0;
 
     bool naming = false;
     bool donenaming = false;
@@ -157,7 +166,6 @@ private:
 
 private slots:
     void painting();
-    void on_Beginbut_clicked();
     void on_Mainbut_clicked();
 };
 #endif // MAINWINDOW_H
