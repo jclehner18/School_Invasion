@@ -127,7 +127,7 @@ private:
     void enemyShoot(enemy en);
     bool checkBarCollision(enemy_shot *enshot, barrier *barr);
 
-    int speed = 1000/50;
+    int speed = 1000/50; //50 is the amount of frames per second
     int moveFrame;
     int movement;
     bool ingame = false;
@@ -148,14 +148,14 @@ private:
     int player_height;
 
     int cooldown = 0;
-    const int COOLDOWN_LENGTH =1; //Debug timer
-    //const int COOLDOWN_LENGTH = 15; //Normal cooldown
+    //const int COOLDOWN_LENGTH =1; //Debug timer
+    const int COOLDOWN_LENGTH = 15; //Normal cooldown
 
     enemy special_en;
-    int ENEMY_WAIT = 350;
-    int enemywaittime = 0;
-    int ENSHOT_WAIT = 400;
-    int enshot_timer = 0;
+    int ENEMY_WAIT = 350;  //Amount of frames to wait before another special enemy can be spawned
+    int enemywaittime = 0; //Frame counter for another special enemy to be spawned. If it is -1 special enemy is in play
+    int ENSHOT_WAIT = 0;//Amount of frames to wait before an enemy can shoot
+    int enshot_timer = 0; //Frame counter to wait for an enemy shot
 
 
     bool enemiesDown = false;
@@ -183,8 +183,10 @@ private:
 
     int Rain = QColor(0, 150, 0).hue();
 
+    void MainMenu();
+
 private slots:
     void painting();
-    void on_Mainbut_clicked();
+
 };
 #endif // MAINWINDOW_H

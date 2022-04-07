@@ -7,6 +7,7 @@
 //Some how animate the selected option
 
 //Add music at some point
+QSound music("../Undertale.wav");
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -24,11 +25,10 @@ MainWindow::MainWindow(QWidget *parent)
     player_height = player_img.height();
     makeBarriers();
     getHighScores();
-    ui->Mainbut->hide();
     getScreenText();
 
     srand(NULL);
-
+    music.setLoops(0);
     timer->start(speed);
 }
 
@@ -41,7 +41,7 @@ void MainWindow::loadImages() {
     Sharma.load("../Sharma.png");
     Overton.load("../Overton.png");
     Woolverton.load("../Woolverton.png");
-    player_img.load("../Player_Img.png");
+    player_img.load("../Kobe.png");
     MainShot.load("../MainShot.png");
     desk.load("../desk.png");
     chalkboard.load("../chalkboard.jpg");
@@ -57,6 +57,7 @@ void MainWindow::loadImages() {
     Sharma = Sharma.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
     Woolverton = Woolverton.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
     Overton = Overton.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
+    player_img = player_img.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
 
     Carr_rev = Carr.mirrored(true, false);
     Carroll_rev = Carroll.mirrored(true, false);
@@ -113,7 +114,7 @@ void MainWindow::makeBarriers() {
     for(int i =0; i<4; i++) {
         barrier barr;
         barr.x = 124+254*i;
-        barr.y = gameheight-220;
+        barr.y = gameheight-180;
         barr.img = &desk;
         barr.width = desk.width();
         barr.height = desk.height();
@@ -189,9 +190,11 @@ void MainWindow::paintEvent(QPaintEvent *e) {
 
 
 
-        p.drawImage(player_x, player_y, Carr);
+        p.drawImage(player_x, player_y, player_img);
         if(start && !pause && !gameover) {
-
+            if(music.isFinished()) {
+                music.play();
+            }
             if(moveFrame==0) {
                 moveEnemies();
                 moveFrame = movement;
@@ -245,6 +248,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                     p.setPen(Qt::black);
                     p.drawText(gamewidth/2-fm.horizontalAdvance(levelupstr)/2, gameheight/2, levelupstr);
                     levelUpScreen++;
+                    music.stop();
                 } else if(levelUpScreen==50) {
                     makeLevel();
                     start = false;
@@ -324,7 +328,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                     p.drawText(0, i*40+50, Qtxt);
                     txt = "";
                 }
-            mainScreen ++;
+            mainScreen = characters*2+1;
         } else {
             QColor col = Qt::green;
             col.setAlphaF(1);
@@ -399,6 +403,7 @@ void MainWindow::moveEnemies() {
             enemies[i].y += 30;
             if(enemies[i].y+enemies[i].height>=gameheight-200) {
                 gameover = true;
+                music.stop();
             } else if(movement>5) {
                 movement -=1;
             }
@@ -459,6 +464,7 @@ void MainWindow::moveShoot() {
             i--;
         } else if(checkEnCollision(&enshots[i])) {
             gameover = true;
+            music.stop();
         } else {
             for(int j = 0; j<barriers.size(); j++) {
                 if(barriers[j].x<=enshots[i].x+enshots[i].width && barriers[j].x+barriers[j].width>enshots[i].x) {
@@ -537,6 +543,11 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 
         if(key==Qt::Key_P && ingame) {
             pause = !pause;
+            if(pause) {
+                music.stop();
+            } else {
+                music.play();
+            }
         }
     } else if(ingame && gameover && naming && !donenaming && name.length()<8 && event->modifiers()!=Qt::ShiftModifier) {
         switch(key) {
@@ -759,18 +770,17 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
         donenaming = true;
         setHighScores();
         score = 0;
-        ui->Mainbut->show();
     } else if(naming && gameover && key==Qt::Key_Backspace && !donenaming && name.length()>0) {
         name = name.substr(0, name.length()-1);
     }
     if(!naming && gameover) {
-        ui->Mainbut->show();
     }
 
     if(key==Qt::Key_Space) {
         //shoot
         if(ingame && !start) {
             start=true;
+            music.play();
         } else if(ingame && start && cooldown<=0 && enemies.size()>=0) {
             shot sho;
             sho.sho_img = &MainShot;
@@ -842,8 +852,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_Mainbut_clicked() {
-    ui->Mainbut->hide();
+void MainWindow::MainMenu() {
     ingame = false;
     start = false;
     gameover = false;
