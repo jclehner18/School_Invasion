@@ -31,14 +31,14 @@ struct enemy  {
     int x;
     int y;
     int width;
-    int hieght;
+    int height;
 };
 
 struct shot {
     int x;
     int y;
     int width;
-    int hieght;
+    int height;
     QImage *sho_img;
 };
 
@@ -46,14 +46,17 @@ struct enemy_shot {
     int x;
     int y;
     int width;
-    int hieght;
+    int height;
     QImage *sho_img;
 };
 
 struct barrier {
     int x;
     int y;
-    QImage img;
+    QImage *img;
+    int width;
+    int height;
+    vector<vector<bool>> hits;
 };
 
 class MainWindow : public QMainWindow
@@ -81,16 +84,19 @@ private:
     QImage Mitofsky;
     QImage Carroll;
     QImage Woolverton;
+    QImage Overton;
     QImage Khadka_rev;
     QImage Sharma_rev;
     QImage Carr_rev;
     QImage Mitofsky_rev;
     QImage Carroll_rev;
     QImage Woolverton_rev;
+    QImage Overton_rev;
     QImage MainShot;
     QImage player_img;
     QImage EnemyShot;
     QImage background;
+    //Just draw Over the QImage based on the bool double vector
     QImage desk;
     QImage chalkboard;
 
@@ -118,6 +124,8 @@ private:
     void setHighScores();
     void getScreenText();
     void Rainbow();
+    void enemyShoot(enemy en);
+    bool checkBarCollision(enemy_shot *enshot, barrier *barr);
 
     int speed = 1000/50;
     int moveFrame;
@@ -140,8 +148,15 @@ private:
     int player_height;
 
     int cooldown = 0;
-    const int COOLDOWN_LENGTH = 1;
-    //const int COOLDOWN_LENGTH = 15; Normal cooldown
+    const int COOLDOWN_LENGTH =1; //Debug timer
+    //const int COOLDOWN_LENGTH = 15; //Normal cooldown
+
+    enemy special_en;
+    int ENEMY_WAIT = 350;
+    int enemywaittime = 0;
+    int ENSHOT_WAIT = 400;
+    int enshot_timer = 0;
+
 
     bool enemiesDown = false;
 

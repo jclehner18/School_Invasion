@@ -17,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent)
     setFixedSize(start_width, start_height);
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(painting()));
-    repaint();
     grabKeyboard();
     grabMouse();
     setMouseTracking(true);
@@ -27,6 +26,9 @@ MainWindow::MainWindow(QWidget *parent)
     getHighScores();
     ui->Mainbut->hide();
     getScreenText();
+
+    srand(NULL);
+
     timer->start(speed);
 }
 
@@ -37,19 +39,24 @@ void MainWindow::loadImages() {
     Khadka.load("../Khadka.png");
     Mitofsky.load("../Mitofsky.png");
     Sharma.load("../Sharma.png");
+    Overton.load("../Overton.png");
     Woolverton.load("../Woolverton.png");
     player_img.load("../Player_Img.png");
     MainShot.load("../MainShot.png");
-    EnemyShot.load("../EnemyShot.png");
     desk.load("../desk.png");
     chalkboard.load("../chalkboard.jpg");
+    EnemyShot.load("../Turn_In.png");
 
+    desk = desk.scaled(130, 45, Qt::IgnoreAspectRatio, Qt::FastTransformation);
+    MainShot = MainShot.scaled(22, 30, Qt::IgnoreAspectRatio, Qt::FastTransformation);
+    EnemyShot = EnemyShot.scaled(30, 30, Qt::IgnoreAspectRatio, Qt::FastTransformation);
     Carr = Carr.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
     Carroll = Carroll.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
     Khadka = Khadka.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
     Mitofsky = Mitofsky.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
     Sharma = Sharma.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
     Woolverton = Woolverton.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
+    Overton = Overton.scaled(50, 50, Qt::IgnoreAspectRatio, Qt::FastTransformation);
 
     Carr_rev = Carr.mirrored(true, false);
     Carroll_rev = Carroll.mirrored(true, false);
@@ -57,6 +64,7 @@ void MainWindow::loadImages() {
     Mitofsky_rev = Mitofsky.mirrored(true, false);
     Sharma_rev = Sharma.mirrored(true, false);
     Woolverton_rev = Woolverton.mirrored(true, false);
+    Overton_rev = Overton.mirrored(true, false);
 }
 
 void MainWindow::getScreenText() {
@@ -106,7 +114,18 @@ void MainWindow::makeBarriers() {
         barrier barr;
         barr.x = 124+254*i;
         barr.y = gameheight-220;
-        barr.img = desk;
+        barr.img = &desk;
+        barr.width = desk.width();
+        barr.height = desk.height();
+        for(int j =0; j<5; j++) {
+            vector<bool> vec;
+            vec.push_back(false);
+            vec.push_back(false);
+            vec.push_back(false);
+            vec.push_back(false);
+            vec.push_back(false);
+            barr.hits.push_back(vec);
+        }
         barriers.push_back(barr);
     }
 }
@@ -128,7 +147,22 @@ void MainWindow::paintEvent(QPaintEvent *e) {
         p.drawText(400, 56, highstr);
 
 
-        //Draw Objects
+        //Draw Barriers
+        for(int i =0; i<barriers.size(); i++) {
+            //Destroy barriers in 5 chunks of 26
+            p.drawImage(barriers[i].x, barriers[i].y, *barriers[i].img);
+            for(int j=0; j<barriers[i].hits.size(); j++) {
+                for(int k=0; k<barriers[i].hits[j].size(); k++) {
+                    if(barriers[i].hits[j][k]) {
+                        p.setBrush(QColor(235, 219, 195));
+                        p.setPen(QColor(235, 219, 195));
+                        p.drawRect(barriers[i].x+(barriers[i].width/barriers[i].hits.size())*j, barriers[i].y+(barriers[i].height/barriers[i].hits[j].size())*k, barriers[i].width/barriers[i].hits.size(), barriers[i].height/barriers[i].hits[j].size());
+                    }
+                }
+            }
+        }
+
+        //Draw Enemies
         for(int i = 0; i<enemies.size(); i++) {
             if(AnimateEnemies>=3) {
                 p.drawImage(enemies[i].x, enemies[i].y, *enemies[i].en_rev);
@@ -136,18 +170,28 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                 p.drawImage(enemies[i].x, enemies[i].y, *enemies[i].en);
             }
         }
+        if(AnimateEnemies>=3 && enemywaittime==-1) {
+            p.drawImage(special_en.x, special_en.y, *special_en.en_rev);
+        } else if(enemywaittime==-1){
+            p.drawImage(special_en.x, special_en.y, *special_en.en);
+        }
+
+
+        //Draw Character Shots
         for(int i = 0; i<shots.size(); i++) {
             p.drawImage(shots[i].x, shots[i].y, *shots[i].sho_img);
         }
+
+        //Draw Enemy Shots
         for(int i =0; i<enshots.size(); i++) {
-            //p.drawImage(enshots[i].x, enshots[i].y, *enshots[i].sho_img);
+            p.drawImage(enshots[i].x, enshots[i].y, *enshots[i].sho_img);
         }
-        for(int i =0; i<barriers.size(); i++) {
-            //Destroy barriers in 5 chunks of 26
-            p.drawImage(barriers[i].x, barriers[i].y, barriers[i].img);
-        }
+
+
+
+        p.drawImage(player_x, player_y, Carr);
         if(start && !pause && !gameover) {
-            p.drawImage(player_x, player_y, Carr);
+
             if(moveFrame==0) {
                 moveEnemies();
                 moveFrame = movement;
@@ -161,6 +205,37 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             }
             moveShoot();
             cooldown--;
+
+            //Make Special Enemy
+            if(enemywaittime>=ENEMY_WAIT) {
+                if(rand()%100<7+enemywaittime/10) {
+                    special_en.x = -80;
+                    special_en.y = 80;
+                    special_en.en = &Overton;
+                    special_en.en_rev = &Overton_rev;
+                    special_en.width = special_en.en->width();
+                    special_en.height = special_en.en->height();
+                    special_en.pointval = 100;
+                    enemywaittime = -1;
+                } else {
+                    enemywaittime ++;
+                }
+            } else if(enemywaittime!=-1){
+               enemywaittime++;
+            }
+
+            //Decides if enemy shoots
+            if(ENSHOT_WAIT<=enshot_timer) {
+                if(rand()%100<15+enshot_timer/10) {
+                    enemyShoot(enemies[rand()%enemies.size()]);
+                    enshot_timer = 0;
+                } else {
+                    enshot_timer++;
+                }
+            } else {
+                enshot_timer++;
+            }
+
             if(enemies.size()==0) {
                 if(levelUpScreen<50) {
                     shots.clear();
@@ -174,6 +249,11 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                     makeLevel();
                     start = false;
                     levelUpScreen = 0;
+                    if(ENSHOT_WAIT>100) {
+                        ENSHOT_WAIT -=100;
+                    } else if(ENSHOT_WAIT>10) {
+                        ENSHOT_WAIT -=10;
+                    }
                 }
             }
         } else if(!start && !gameover) {
@@ -263,6 +343,16 @@ void MainWindow::paintEvent(QPaintEvent *e) {
     }
 }
 
+void MainWindow::enemyShoot(enemy en) {
+    enemy_shot shot;
+    shot.x = en.x+en.width/2;
+    shot.y = en.y+en.height;
+    shot.sho_img = &EnemyShot;
+    shot.width = EnemyShot.width();
+    shot.height = EnemyShot.height();
+    enshots.push_back(shot);
+} 
+
 void MainWindow::Rainbow() {
     Rain += 2;
     if(Rain>=360) {
@@ -277,7 +367,7 @@ void MainWindow::makeLevel() {
         enemies.push_back(makeEnemy(&Mitofsky, &Mitofsky_rev, i*70+70, 220, 40));
         enemies.push_back(makeEnemy(&Carroll, &Carroll_rev, i*70+70, 280, 30));
         enemies.push_back(makeEnemy(&Carr, &Carr_rev, i*70+70, 340, 20));
-        enemies.push_back(makeEnemy(&Woolverton, &Woolverton_rev, i*70+70, 420, 10));
+        enemies.push_back(makeEnemy(&Woolverton, &Woolverton_rev, i*70+70, 400, 10));
     }
     level++;
     movement = 50/2-level*4;
@@ -293,7 +383,7 @@ enemy MainWindow::makeEnemy(QImage *img, QImage *img_rev, int x, int y, int poin
     en.x = x;
     en.y = y;
     en.width = en.en->width();
-    en.hieght = en.en->height();
+    en.height = en.en->height();
     en.pointval = pointVal;
     return en;
 }
@@ -307,7 +397,7 @@ void MainWindow::moveEnemies() {
     if(enemiesDown) {
         for(int i = 0; i<enemies.size(); i++) {
             enemies[i].y += 30;
-            if(enemies[i].y+enemies[i].hieght>=gameheight-200) {
+            if(enemies[i].y+enemies[i].height>=gameheight-200) {
                 gameover = true;
             } else if(movement>5) {
                 movement -=1;
@@ -323,17 +413,29 @@ void MainWindow::moveEnemies() {
             } else {
                 enemies[i].x+=5;
             }
-            if((enemies[i].x<=leftboundry &&leftdir) || (enemies[i].x+enemies[i].hieght>=rightboundry&&!leftdir)) {
+            if((enemies[i].x<=leftboundry &&leftdir) || (enemies[i].x+enemies[i].height>=rightboundry&&!leftdir)) {
                 enemiesDown = true;
             }
+        }
+    }
+    if(enemywaittime==-1) {
+        special_en.x += 10;
+        if(special_en.x>=gamewidth) {
+            enemywaittime=0;
         }
     }
 }
 
 void MainWindow::moveShoot() {
+    //Move Player Shots and check Collisiosns
    for(int i = 0; i<shots.size(); i++) {
        shots[i].y -=10;
-       if(shots[i].y+shots[i].hieght<0) {
+       if(shots[i].y+shots[i].height<0) {
+           shots.erase(shots.begin()+i);
+           i--;
+       } else if(enemywaittime==-1 && checkCollision(&special_en, &shots[i])) {
+           score += special_en.pointval;
+           enemywaittime =0;
            shots.erase(shots.begin()+i);
            i--;
        } else {
@@ -348,18 +450,69 @@ void MainWindow::moveShoot() {
            }
        }
    }
+    //Move Enemy Shoots and check collions
+    //Need to add Collision detection for barriers.
+   for(int i = 0; i<enshots.size(); i++) {
+       enshots[i].y +=5;
+        if(enshots[i].y>gameheight) {
+            enshots.erase(enshots.begin()+i);
+            i--;
+        } else if(checkEnCollision(&enshots[i])) {
+            gameover = true;
+        } else {
+            for(int j = 0; j<barriers.size(); j++) {
+                if(barriers[j].x<=enshots[i].x+enshots[i].width && barriers[j].x+barriers[j].width>enshots[i].x) {
+                    //Partially destroy barrier
+                    //If the bullet is in contact with the barrier
+                    if(checkBarCollision(&enshots[i], &barriers[j])) {
+                        enshots.erase(enshots.begin()+i);
+                        i--;
+                        break;
+                    }
+                }
+            }
+        }
+   }
 }
 
 bool MainWindow::checkCollision(enemy *en, shot *sh) {
-    if(en->y+en->hieght>=sh->y && sh->y+sh->hieght>=en->y) {
+    if(en->y+en->height>=sh->y && sh->y+sh->height>=en->y) {
         return en->x+en->width>=sh->x && sh->x+sh->width>=en->x;
     }
     return false;
 }
 
 bool MainWindow::checkEnCollision(enemy_shot *enshot) {
-    if(player_y+player_height>=enshot->y && enshot->y+enshot->hieght>=player_y) {
+    if(player_y+player_height>=enshot->y && enshot->y+enshot->height>=player_y) {
         return player_x+player_width>=enshot->x && enshot->x+enshot->width>=player_x;
+    }
+    return false;
+}
+
+bool MainWindow::checkBarCollision(enemy_shot *enshot, barrier *barr) {
+    for(int i =0; i<barr->hits.size(); i++) {
+        if(enshot->x+enshot->width/2>=barr->x+(barr->width/barr->hits.size())*i && enshot->x+enshot->width/2<=barr->x+(barr->width/barr->hits.size())*(i+1)) {
+            for(int j = 0; j<barr->hits[i].size(); j++) {
+                if(enshot->y+enshot->height>barr->y+(barr->height/barr->hits[i].size())*j && !barr->hits[i][j]) {
+                    barr->hits[i][j] = true;
+                    return true;
+                }
+            }
+        } else if(i==0 && enshot->x+enshot->width>barr->x && enshot->x<barr->x) {
+            for(int j = 0; j<barr->hits[i].size(); j++) {
+                if(enshot->y+enshot->height>barr->y+(barr->height/barr->hits[i].size())*j && !barr->hits[i][j]) {
+                    barr->hits[i][j] = true;
+                    return true;
+                }
+            }
+        } else if(i==barr->hits.size()-1 && enshot->x+enshot->width>barr->x+barr->width && enshot->x>barr->x+(barr->width/barr->hits.size())*(i-1)) {
+            for(int j = 0; j<barr->hits[i].size(); j++) {
+                if(enshot->y+enshot->height>barr->y+(barr->height/barr->hits[i].size())*j && !barr->hits[i][j]) {
+                    barr->hits[i][j] = true;
+                    return true;
+                }
+            }
+        }
     }
     return false;
 }
@@ -385,117 +538,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
         if(key==Qt::Key_P && ingame) {
             pause = !pause;
         }
-    } else if(ingame && gameover && naming && !donenaming && name.length()<8) {
+    } else if(ingame && gameover && naming && !donenaming && name.length()<8 && event->modifiers()!=Qt::ShiftModifier) {
         switch(key) {
-            case Qt::Key_Shift: {
-                switch(key) {
-                    case Qt::Key_A: {
-                       name +="A";
-                       break;
-                    }
-                    case Qt::Key_B: {
-                       name +="B";
-                       break;
-                    }
-                    case Qt::Key_C: {
-                       name +="C";
-                       break;
-                    }
-                    case Qt::Key_D: {
-                       name +="D";
-                       break;
-                    }
-                    case Qt::Key_E: {
-                       name +="E";
-                       break;
-                    }
-                    case Qt::Key_F: {
-                       name +="F";
-                       break;
-                    }
-                    case Qt::Key_G: {
-                       name +="G";
-                       break;
-                    }
-                    case Qt::Key_H: {
-                       name +="H";
-                       break;
-                    }
-                    case Qt::Key_I: {
-                       name +="I";
-                       break;
-                    }
-                    case Qt::Key_J: {
-                       name +="J";
-                       break;
-                    }
-                    case Qt::Key_K: {
-                       name +="K";
-                       break;
-                    }
-                    case Qt::Key_L: {
-                       name +="L";
-                       break;
-                    }
-                    case Qt::Key_M: {
-                       name +="M";
-                       break;
-                    }
-                    case Qt::Key_N: {
-                       name +="N";
-                       break;
-                    }
-                    case Qt::Key_O: {
-                       name +="O";
-                       break;
-                    }
-                    case Qt::Key_P: {
-                       name +="P";
-                       break;
-                    }
-                    case Qt::Key_Q: {
-                       name +="Q";
-                       break;
-                    }
-                    case Qt::Key_R: {
-                       name +="R";
-                       break;
-                    }
-                    case Qt::Key_S: {
-                       name +="S";
-                       break;
-                    }
-                    case Qt::Key_T: {
-                       name +="T";
-                       break;
-                    }
-                    case Qt::Key_U: {
-                       name +="u";
-                       break;
-                    }
-                    case Qt::Key_V: {
-                       name +="V";
-                       break;
-                    }
-                    case Qt::Key_W: {
-                       name +="W";
-                       break;
-                    }
-                    case Qt::Key_X: {
-                       name +="X";
-                       break;
-                    }
-                    case Qt::Key_Y: {
-                       name +="Y";
-                       break;
-                    }
-                    case Qt::Key_Z: {
-                       name +="Z";
-                       break;
-                    }
-                }
-                break;
-            }
             case Qt::Key_A: {
                name +="a";
                break;
@@ -601,6 +645,113 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
                break;
             }
         }
+    } else if(ingame && gameover && naming && !donenaming && name.length()<8 && event->modifiers()==Qt::ShiftModifier) {
+        switch(key) {
+        case Qt::Key_A: {
+           name +="A";
+           break;
+        }
+        case Qt::Key_B: {
+           name +="B";
+           break;
+        }
+        case Qt::Key_C: {
+           name +="C";
+           break;
+        }
+        case Qt::Key_D: {
+           name +="D";
+           break;
+        }
+        case Qt::Key_E: {
+           name +="E";
+           break;
+        }
+        case Qt::Key_F: {
+           name +="F";
+           break;
+        }
+        case Qt::Key_G: {
+           name +="G";
+           break;
+        }
+        case Qt::Key_H: {
+           name +="H";
+           break;
+        }
+        case Qt::Key_I: {
+           name +="I";
+           break;
+        }
+        case Qt::Key_J: {
+           name +="J";
+           break;
+        }
+        case Qt::Key_K: {
+           name +="K";
+           break;
+        }
+        case Qt::Key_L: {
+           name +="L";
+           break;
+        }
+        case Qt::Key_M: {
+           name +="M";
+           break;
+        }
+        case Qt::Key_N: {
+           name +="N";
+           break;
+        }
+        case Qt::Key_O: {
+           name +="O";
+           break;
+        }
+        case Qt::Key_P: {
+           name +="P";
+           break;
+        }
+        case Qt::Key_Q: {
+           name +="Q";
+           break;
+        }
+        case Qt::Key_R: {
+           name +="R";
+           break;
+        }
+        case Qt::Key_S: {
+           name +="S";
+           break;
+        }
+        case Qt::Key_T: {
+           name +="T";
+           break;
+        }
+        case Qt::Key_U: {
+           name +="u";
+           break;
+        }
+        case Qt::Key_V: {
+           name +="V";
+           break;
+        }
+        case Qt::Key_W: {
+           name +="W";
+           break;
+        }
+        case Qt::Key_X: {
+           name +="X";
+           break;
+        }
+        case Qt::Key_Y: {
+           name +="Y";
+           break;
+        }
+        case Qt::Key_Z: {
+           name +="Z";
+           break;
+        }
+        }
     }
 
     if(naming && gameover && key==Qt::Key_Space && !donenaming && name.length()>0) {
@@ -626,7 +777,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
             sho.x = player_x + player_width/2;
             sho.y = player_y;
             sho.width = sho.sho_img->width();
-            sho.hieght = sho.sho_img->height();
+            sho.height = sho.sho_img->height();
             shots.push_back(sho);
             cooldown=COOLDOWN_LENGTH;
         }
@@ -647,7 +798,7 @@ void MainWindow::mousePressEvent(QMouseEvent *e) {
            gameOverScreen = 0;
            player_x = 250;
            player_y = gameheight-100;
-           score = 2450;
+           score = 3450;
            donenaming = false;
            naming = false;
            leftdir = false;
@@ -700,5 +851,6 @@ void MainWindow::on_Mainbut_clicked() {
     shots.clear();
     enshots.clear();
     enemiesDown = false;
+    main = true;
+    mainScreen = 0;
 }
-
