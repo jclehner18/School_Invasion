@@ -191,10 +191,10 @@ void MainWindow::paintEvent(QPaintEvent *e) {
 
 
         p.drawImage(player_x, player_y, player_img);
+
+
         if(start && !pause && !gameover) {
-            if(music.isFinished()) {
-                music.play();
-            }
+
             if(moveFrame==0) {
                 moveEnemies();
                 moveFrame = movement;
@@ -210,7 +210,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             cooldown--;
 
             //Make Special Enemy
-            if(enemywaittime>=ENEMY_WAIT) {
+            if(enemywaittime>=ENEMY_WAIT && enemies.size()>0) {
                 if(rand()%100<7+enemywaittime/10) {
                     special_en.x = -80;
                     special_en.y = 80;
@@ -228,7 +228,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             }
 
             //Decides if enemy shoots
-            if(ENSHOT_WAIT<=enshot_timer) {
+            if(ENSHOT_WAIT<=enshot_timer && enemies.size()>0) {
                 if(rand()%100<15+enshot_timer/10) {
                     enemyShoot(enemies[rand()%enemies.size()]);
                     enshot_timer = 0;
@@ -243,13 +243,16 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                 if(levelUpScreen<50) {
                     shots.clear();
                     enemies.clear();
+                    enshots.clear();
+                    enemywaittime = 0;
                     QFontMetrics fm(font);
                     QString levelupstr = "Level " + QString::fromStdString(to_string(level)) + " Completed!!!";
                     p.setPen(Qt::black);
                     p.drawText(gamewidth/2-fm.horizontalAdvance(levelupstr)/2, gameheight/2, levelupstr);
                     levelUpScreen++;
-                    music.stop();
+                    qDebug() << levelUpScreen;
                 } else if(levelUpScreen==50) {
+                    music.stop();
                     makeLevel();
                     start = false;
                     levelUpScreen = 0;
@@ -258,6 +261,59 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                     } else if(ENSHOT_WAIT>10) {
                         ENSHOT_WAIT -=10;
                     }
+                } else {
+                    //Key Presses
+                    if(keys[Qt::Key_Left]) {
+                        if(player_x>10) {
+                            player_x -=5;
+                        }
+                    }
+                    if(keys[Qt::Key_Right]) {
+                        if(player_x<gamewidth-10) {
+                            player_x +=5;
+                        }
+                    }
+                    if(keys[Qt::Key_Space] && start && cooldown<=0 && enemies.size()>=0) {
+                                shot sho;
+                                sho.sho_img = &MainShot;
+                                sho.x = player_x + player_width/2;
+                                sho.y = player_y;
+                                sho.width = sho.sho_img->width();
+                                sho.height = sho.sho_img->height();
+                                shots.push_back(sho);
+                                cooldown=COOLDOWN_LENGTH;
+                    }
+
+
+                }
+            } else {
+                if(music.isFinished()) {
+                    music.play();
+                }
+                //Key Presses
+                if(keys[Qt::Key_Left]) {
+                    if(player_x>10) {
+                        player_x -=5;
+                    }
+                }
+                if(keys[Qt::Key_Right]) {
+                    if(player_x<gamewidth-10) {
+                        player_x +=5;
+                    }
+                }
+                if(keys[Qt::Key_Space] && start && cooldown<=0 && enemies.size()>=0) {
+                            shot sho;
+                            sho.sho_img = &MainShot;
+                            sho.x = player_x + player_width/2;
+                            sho.y = player_y;
+                            sho.width = sho.sho_img->width();
+                            sho.height = sho.sho_img->height();
+                            shots.push_back(sho);
+                            cooldown=COOLDOWN_LENGTH;
+                }
+
+                if(music.isFinished()) {
+                    music.play();
                 }
             }
         } else if(!start && !gameover) {
@@ -365,6 +421,8 @@ void MainWindow::Rainbow() {
 }
 
 void MainWindow::makeLevel() {
+    enshots.clear();
+
     for(int i = 0; i<11; i++) {
         enemies.push_back(makeEnemy(&Khadka, &Khadka_rev, i*70+70, 100, 60));
         enemies.push_back(makeEnemy(&Sharma, &Sharma_rev, i*70+70, 160, 50));
@@ -482,15 +540,15 @@ void MainWindow::moveShoot() {
 }
 
 bool MainWindow::checkCollision(enemy *en, shot *sh) {
-    if(en->y+en->height>=sh->y && sh->y+sh->height>=en->y) {
-        return en->x+en->width>=sh->x && sh->x+sh->width>=en->x;
+    if(en->y+en->height>=sh->y+3 && sh->y+sh->height>=en->y+3) {
+        return en->x+en->width>=sh->x+3 && sh->x+sh->width>=en->x+3;
     }
     return false;
 }
 
 bool MainWindow::checkEnCollision(enemy_shot *enshot) {
-    if(player_y+player_height>=enshot->y && enshot->y+enshot->height>=player_y) {
-        return player_x+player_width>=enshot->x && enshot->x+enshot->width>=player_x;
+    if(player_y+player_height>=enshot->y+5 && enshot->y+enshot->height>=player_y+5) {
+        return player_x+player_width>=enshot->x+5 && enshot->x+enshot->width>=player_x+5;
     }
     return false;
 }
@@ -524,23 +582,9 @@ bool MainWindow::checkBarCollision(enemy_shot *enshot, barrier *barr) {
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
+    keys[event->key()] = true;
     int key = event->key();
     if(start && !gameover) {
-        switch(key) {
-            case Qt::Key_Left: {
-                if(player_x>10) {
-                    player_x -=5;
-                }
-               break;
-            }
-            case Qt::Key_Right: {
-                if(player_x<gamewidth-10) {
-                    player_x +=5;
-                }
-                break;
-            }
-        }
-
         if(key==Qt::Key_P && ingame) {
             pause = !pause;
             if(pause) {
@@ -781,17 +825,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
         if(ingame && !start) {
             start=true;
             music.play();
-        } else if(ingame && start && cooldown<=0 && enemies.size()>=0) {
-            shot sho;
-            sho.sho_img = &MainShot;
-            sho.x = player_x + player_width/2;
-            sho.y = player_y;
-            sho.width = sho.sho_img->width();
-            sho.height = sho.sho_img->height();
-            shots.push_back(sho);
-            cooldown=COOLDOWN_LENGTH;
         }
     }
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent *e) {
+    keys[e->key()] = false;
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *e) {
@@ -801,14 +840,14 @@ void MainWindow::mousePressEvent(QMouseEvent *e) {
        if(e->buttons()==Qt::LeftButton && mousey>=9*40+30 && mousey<=9*40+110 && main) {
            setFixedSize(gamewidth, gameheight);
            ingame = true;
-           level = 8;
+           level = 0;
            makeLevel();
            start = false;
            gameover = false;
            gameOverScreen = 0;
            player_x = 250;
            player_y = gameheight-100;
-           score = 3450;
+           score = 0;
            donenaming = false;
            naming = false;
            leftdir = false;

@@ -74,6 +74,7 @@ protected:
     void keyPressEvent(QKeyEvent *e);
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
+    void keyReleaseEvent(QKeyEvent *e);
 
 private:
     Ui::MainWindow *ui;
@@ -107,6 +108,8 @@ private:
     const int gameheight = 900;
 
     QTimer *timer;
+
+    QMap<int, bool> keys;
 
     vector<enemy> enemies;
     vector<shot> shots;
@@ -149,12 +152,12 @@ private:
 
     int cooldown = 0;
     //const int COOLDOWN_LENGTH =1; //Debug timer
-    const int COOLDOWN_LENGTH = 15; //Normal cooldown
+    const int COOLDOWN_LENGTH = 0; //Normal cooldown
 
     enemy special_en;
     int ENEMY_WAIT = 350;  //Amount of frames to wait before another special enemy can be spawned
     int enemywaittime = 0; //Frame counter for another special enemy to be spawned. If it is -1 special enemy is in play
-    int ENSHOT_WAIT = 0;//Amount of frames to wait before an enemy can shoot
+    int ENSHOT_WAIT = 200;//Amount of frames to wait before an enemy can shoot
     int enshot_timer = 0; //Frame counter to wait for an enemy shot
 
 
