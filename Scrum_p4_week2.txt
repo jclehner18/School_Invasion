@@ -1,0 +1,10 @@
+Project 4 week 12 scrum notes
+4/5/22
+
+Scrum Master Evan Dickerson
+Members - Nikolas Pensyl, Jack Lehner
+
+Duties:
+Nikolas - Finish up asset collection and implementation
+Jack - Finish use cases, class diagram, and glossary
+Evan - Finish sequence chart and test cases
