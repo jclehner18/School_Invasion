@@ -129,6 +129,9 @@ private:
     void Rainbow();
     void enemyShoot(enemy en);
     bool checkBarCollision(enemy_shot *enshot, barrier *barr);
+    bool checkBarCollision(shot *shot, barrier *barr);
+    void getInstructions();
+    void loopSetter();
 
     int speed = 1000/50; //50 is the amount of frames per second
     int moveFrame;
@@ -152,12 +155,12 @@ private:
 
     int cooldown = 0;
     //const int COOLDOWN_LENGTH =1; //Debug timer
-    const int COOLDOWN_LENGTH = 0; //Normal cooldown
+    const int COOLDOWN_LENGTH = 20; //Normal cooldown
 
     enemy special_en;
     int ENEMY_WAIT = 350;  //Amount of frames to wait before another special enemy can be spawned
     int enemywaittime = 0; //Frame counter for another special enemy to be spawned. If it is -1 special enemy is in play
-    int ENSHOT_WAIT = 200;//Amount of frames to wait before an enemy can shoot
+    int ENSHOT_WAIT = 40;//Amount of frames to wait before an enemy can shoot
     int enshot_timer = 0; //Frame counter to wait for an enemy shot
 
 
@@ -177,6 +180,7 @@ private:
 
     string name ="";
     vector<string> screenlines;
+    vector<string> instructionLines;
     int characters = 0;
 
     bool naming = false;

@@ -8,6 +8,15 @@
 
 //Add music at some point
 QSound music("../Undertale.wav");
+QSound playerShoot("../Player_Shot.wav");
+//QSound enemyshoot("../enemyShot.wav");
+//QSound enemyHit("../enemyHit.wav");
+QSound Hit1("../Hit1.wav");
+QSound Hit2("../Hit2.wav");
+QSound Hit3("../Hit3.wav");
+QSound Hit4("../Hit4.wav");
+QSound Fail("../Fail.wav");
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,10 +35,23 @@ MainWindow::MainWindow(QWidget *parent)
     makeBarriers();
     getHighScores();
     getScreenText();
+    getInstructions();
 
     srand(NULL);
-    music.setLoops(0);
+    loopSetter();
     timer->start(speed);
+}
+
+void MainWindow::loopSetter() {
+    music.setLoops(0);
+    playerShoot.setLoops(0);
+    Hit1.setLoops(0);
+    Hit2.setLoops(0);
+    Hit3.setLoops(0);
+    Hit4.setLoops(0);
+    Fail.setLoops(0);
+    //enemyshoot.setLoops(0);
+    //enemyHit.setLoops(0);
 }
 
 void MainWindow::loadImages() {
@@ -75,6 +97,16 @@ void MainWindow::getScreenText() {
     while(getline(infile, txt)) {
         screenlines.push_back(txt);
         characters += txt.length();
+    }
+    infile.close();
+}
+
+void MainWindow::getInstructions() {
+    ifstream infile;
+    string txt;
+    infile.open("../Instructions.txt");
+    while(getline(infile, txt)) {
+        instructionLines.push_back(txt);
     }
     infile.close();
 }
@@ -194,6 +226,10 @@ void MainWindow::paintEvent(QPaintEvent *e) {
 
 
         if(start && !pause && !gameover) {
+            if(lives==0) {
+                gameover = true;
+                music.stop();
+            }
 
             if(moveFrame==0) {
                 moveEnemies();
@@ -250,7 +286,6 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                     p.setPen(Qt::black);
                     p.drawText(gamewidth/2-fm.horizontalAdvance(levelupstr)/2, gameheight/2, levelupstr);
                     levelUpScreen++;
-                    qDebug() << levelUpScreen;
                 } else if(levelUpScreen==50) {
                     music.stop();
                     makeLevel();
@@ -282,6 +317,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                                 sho.height = sho.sho_img->height();
                                 shots.push_back(sho);
                                 cooldown=COOLDOWN_LENGTH;
+                                playerShoot.play();
                     }
 
 
@@ -310,10 +346,7 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                             sho.height = sho.sho_img->height();
                             shots.push_back(sho);
                             cooldown=COOLDOWN_LENGTH;
-                }
-
-                if(music.isFinished()) {
-                    music.play();
+                            playerShoot.play();
                 }
             }
         } else if(!start && !gameover) {
@@ -336,6 +369,14 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             QString gamestr = "Game Over";
             p.drawText(gamewidth/2-fm.horizontalAdvance(gamestr)/2, gameheight/2+100, gamestr);
             gameOverScreen++;
+            if(gameOverScreen==1) {
+                music.stop();
+                if(Fail.isFinished()) {
+                    Fail.play();
+                } else {
+                    Fail.play();
+                }
+            }
         }
     } else if(gameover && ingame) {
         setFixedSize(1100, 800);
@@ -366,6 +407,10 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                 text = QString::fromStdString(txt);
             }
             p.drawText(gamewidth/2-fm.horizontalAdvance(text)/2, i*65+150, text);
+        }
+        if(!naming) {
+            p.drawRect(28, 34, 285, 80);
+            p.drawText(70, 88, "Main Menu");
         }
     } else if(!instructions && !ingame) {
         p.setBrush(Qt::black);
@@ -399,6 +444,16 @@ void MainWindow::paintEvent(QPaintEvent *e) {
                 }
                 p.drawText(0, i*40+50, Qtxt);
             }
+        }
+    } else if(instructions) {
+        p.setBrush(Qt::black);
+        p.drawImage(0, 0, chalkboard);
+        p.setPen(Qt::white);
+        p.drawRect(28, 34, 285, 80);
+        p.drawText(70, 88, "Main Menu");
+        for(int i = 0; i<instructionLines.size(); i++) {
+            QString Qtxt = QString::fromStdString(instructionLines[i]);
+            p.drawText(30, i*48+170, Qtxt);
         }
     }
 }
@@ -462,6 +517,7 @@ void MainWindow::moveEnemies() {
             if(enemies[i].y+enemies[i].height>=gameheight-200) {
                 gameover = true;
                 music.stop();
+
             } else if(movement>5) {
                 movement -=1;
             }
@@ -502,13 +558,26 @@ void MainWindow::moveShoot() {
            shots.erase(shots.begin()+i);
            i--;
        } else {
+           bool check = false;
            for(int j=0; j<enemies.size(); j++) {
                if(checkCollision(&enemies[j], &shots[i])) {
                     score += enemies[j].pointval;
                     enemies.erase(enemies.begin()+j);
                     shots.erase(shots.begin()+i);
                     i--;
+                    check = true;
                     break;
+               }
+           }
+           for(int j = 0; j<barriers.size() && !check; j++) {
+               if(barriers[j].x<=shots[i].x+shots[i].width && barriers[j].x+barriers[j].width>shots[i].x) {
+                   //Partially destroy barrier
+                   //If the bullet is in contact with the barrier
+                   if(checkBarCollision(&shots[i], &barriers[j])) {
+                       shots.erase(shots.begin()+i);
+                       i--;
+                       break;
+                   }
                }
            }
        }
@@ -521,8 +590,35 @@ void MainWindow::moveShoot() {
             enshots.erase(enshots.begin()+i);
             i--;
         } else if(checkEnCollision(&enshots[i])) {
-            gameover = true;
-            music.stop();
+            lives--;
+            int rando = rand()%4;
+            if(rando==1) {
+                if(Hit1.isFinished()) {
+                    Hit1.play();
+                } else {
+                    Hit1.play();
+                }
+            } else if(rando==2) {
+                if(Hit2.isFinished()) {
+                    Hit2.play();
+                } else {
+                    Hit2.play();
+                }
+            } else if(rando==3) {
+                if(Hit3.isFinished()) {
+                    Hit3.play();
+                } else {
+                    Hit3.play();
+                }
+            } else {
+                if(Hit4.isFinished()) {
+                    Hit4.play();
+                } else {
+                    Hit4.play();
+                }
+            }
+            enshots.erase(enshots.begin()+i);
+            i--;
         } else {
             for(int j = 0; j<barriers.size(); j++) {
                 if(barriers[j].x<=enshots[i].x+enshots[i].width && barriers[j].x+barriers[j].width>enshots[i].x) {
@@ -547,8 +643,8 @@ bool MainWindow::checkCollision(enemy *en, shot *sh) {
 }
 
 bool MainWindow::checkEnCollision(enemy_shot *enshot) {
-    if(player_y+player_height>=enshot->y+5 && enshot->y+enshot->height>=player_y+5) {
-        return player_x+player_width>=enshot->x+5 && enshot->x+enshot->width>=player_x+5;
+    if(player_y+player_height>=enshot->y+10 && enshot->y+enshot->height>=player_y+10) {
+        return player_x+player_width>=enshot->x+15 && enshot->x+enshot->width>=player_x+15;
     }
     return false;
 }
@@ -572,6 +668,34 @@ bool MainWindow::checkBarCollision(enemy_shot *enshot, barrier *barr) {
         } else if(i==barr->hits.size()-1 && enshot->x+enshot->width>barr->x+barr->width && enshot->x>barr->x+(barr->width/barr->hits.size())*(i-1)) {
             for(int j = 0; j<barr->hits[i].size(); j++) {
                 if(enshot->y+enshot->height>barr->y+(barr->height/barr->hits[i].size())*j && !barr->hits[i][j]) {
+                    barr->hits[i][j] = true;
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool MainWindow::checkBarCollision(shot *shot, barrier *barr) {
+    for(int i =0; i<barr->hits.size(); i++) {
+        if(shot->x+shot->width/2>=barr->x+(barr->width/barr->hits.size())*i && shot->x+shot->width/2<=barr->x+(barr->width/barr->hits.size())*(i+1)) {
+            for(int j = 0; j<barr->hits[i].size(); j++) {
+                if(shot->y<barr->y+(barr->height/barr->hits[i].size())*j && !barr->hits[i][j]) {
+                    barr->hits[i][j] = true;
+                    return true;
+                }
+            }
+        } else if(i==0 && shot->x+shot->width>barr->x && shot->x<barr->x) {
+            for(int j = 0; j<barr->hits[i].size(); j++) {
+                if(shot->y<barr->y+(barr->height/barr->hits[i].size())*j && !barr->hits[i][j]) {
+                    barr->hits[i][j] = true;
+                    return true;
+                }
+            }
+        } else if(i==barr->hits.size()-1 && shot->x+shot->width>barr->x+barr->width && shot->x>barr->x+(barr->width/barr->hits.size())*(i-1)) {
+            for(int j = 0; j<barr->hits[i].size(); j++) {
+                if(shot->y<barr->y+(barr->height/barr->hits[i].size())*j && !barr->hits[i][j]) {
                     barr->hits[i][j] = true;
                     return true;
                 }
@@ -836,8 +960,8 @@ void MainWindow::keyReleaseEvent(QKeyEvent *e) {
 void MainWindow::mousePressEvent(QMouseEvent *e) {
    int mousey = e->y();
    int mousex= e->x();
-   if(mainScreen-1>=characters*2) {
-       if(e->buttons()==Qt::LeftButton && mousey>=9*40+30 && mousey<=9*40+110 && main) {
+   if(mainScreen-1>=characters*2 && main) {
+       if(e->buttons()==Qt::LeftButton && mousey>=9*40+30 && mousey<=9*40+110) {
            setFixedSize(gamewidth, gameheight);
            ingame = true;
            level = 0;
@@ -846,6 +970,7 @@ void MainWindow::mousePressEvent(QMouseEvent *e) {
            gameover = false;
            gameOverScreen = 0;
            player_x = 250;
+           lives = 3;
            player_y = gameheight-100;
            score = 0;
            donenaming = false;
@@ -854,19 +979,23 @@ void MainWindow::mousePressEvent(QMouseEvent *e) {
            main = false;
            name ="";
            moveFrame = movement;
-       } else if(e->buttons()==Qt::LeftButton && mousey>=11*40+30 && mousey<=11*40+110 && main) {
+       } else if(e->buttons()==Qt::LeftButton && mousey>=11*40+30 && mousey<=11*40+110) {
            main = false;
            instructions = true;
-       } else if (e->buttons()==Qt::LeftButton && mousey>=13*40+30 && mousey<=13*40+110 && main) {
+           setFixedSize(1100, 800);
+       } else if (e->buttons()==Qt::LeftButton && mousey>=13*40+30 && mousey<=13*40+110) {
            ingame = true;
            gameover = true;
            gameOverScreen = 100;
            main = false;
-       } else if(e->buttons()==Qt::LeftButton && mousey>=15*40+30 && mousey<=15*40+110 && main) {
+       } else if(e->buttons()==Qt::LeftButton && mousey>=15*40+30 && mousey<=15*40+110) {
            qApp->exit(0);
        }
+   } else if (e->buttons()==Qt::LeftButton && instructions && mousey>=34 && mousey<=85+34 && mousex>=28 && mousex<=285+28) {
+       MainMenu();
+   } else if(e->buttons()==Qt::LeftButton && gameover && !naming && mousey>=34 && mousey<=85+34 && mousex>=28 && mousex<=285+28) {
+       MainMenu();
    }
-
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *e) {
@@ -899,6 +1028,8 @@ void MainWindow::MainMenu() {
     shots.clear();
     enshots.clear();
     enemiesDown = false;
+    instructions = false;
     main = true;
-    mainScreen = 0;
+    mainScreen = characters*2+1;
+    setFixedSize(start_width, start_height);
 }

@@ -1,0 +1,9 @@
+School Invaders is a derivative of Space Invaders. The 
+objective of this game is to survive as long as 
+possible and get the highest Score. You do this by 
+using the left/right arrow keys to move left and right.
+You will use the space bar to shoot. You may want to 
+pick your shots carefully as there is a cooldown. Be 
+careful as the enemies will shoot back but don't worry 
+you initially get some barriers(desks) to hide behind.
+Good luck and most importantly enjoy.
