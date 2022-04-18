@@ -1,16 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-//For the intro screen take a picture of a black background monitor
 //That has HTML code with a comment detailing to select one of the options in the unordered list
-//Also have an instructions tab that displays the instructions within comments of HTML code
 //Some how animate the selected option
 
 //Add music at some point
 QSound music("../Undertale.wav");
 QSound playerShoot("../Player_Shot.wav");
 QSound enemyshoot("../enemyShoot.wav");
-//QSound enemyHit("../enemyHit.wav");
+QSound enemyHit("../enemyDie.wav");
 QSound Hit1("../Hit1.wav");
 QSound Hit2("../Hit2.wav");
 QSound Hit3("../Hit3.wav");
@@ -51,7 +49,7 @@ void MainWindow::loopSetter() {
     Hit4.setLoops(0);
     Fail.setLoops(0);
     enemyshoot.setLoops(0);
-    //enemyHit.setLoops(0);
+    enemyHit.setLoops(0);
 }
 
 void MainWindow::loadImages() {
@@ -582,6 +580,11 @@ void MainWindow::moveShoot() {
                     shots.erase(shots.begin()+i);
                     i--;
                     check = true;
+                    if(enemyHit.isFinished()) {
+                        enemyHit.play();
+                    } else {
+                        enemyHit.play();
+                    }
                     break;
                }
            }
