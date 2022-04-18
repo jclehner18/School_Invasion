@@ -1,0 +1,15 @@
+Project 4 week 12 scrum notes
+4/12/22
+
+Scrum Master Nikolas Pensyl
+Members - Evan Dickerson, Jack Lehner
+
+Duties:
+Finish test cases
+
+Completed:
+core game functionalities
+sequence diagram
+class diagram
+use case diagram
+glossary
