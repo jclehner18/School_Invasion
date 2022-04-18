@@ -145,6 +145,7 @@ private:
     bool leftdir=false;
     const int leftboundry = 50;
     const int rightboundry = gamewidth-50;
+    int invincible = 0;
 
     int AnimateEnemies = 0;
 

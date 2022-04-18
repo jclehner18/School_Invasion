@@ -9,7 +9,7 @@
 //Add music at some point
 QSound music("../Undertale.wav");
 QSound playerShoot("../Player_Shot.wav");
-//QSound enemyshoot("../enemyShot.wav");
+QSound enemyshoot("../enemyShoot.wav");
 //QSound enemyHit("../enemyHit.wav");
 QSound Hit1("../Hit1.wav");
 QSound Hit2("../Hit2.wav");
@@ -50,7 +50,7 @@ void MainWindow::loopSetter() {
     Hit3.setLoops(0);
     Hit4.setLoops(0);
     Fail.setLoops(0);
-    //enemyshoot.setLoops(0);
+    enemyshoot.setLoops(0);
     //enemyHit.setLoops(0);
 }
 
@@ -221,14 +221,25 @@ void MainWindow::paintEvent(QPaintEvent *e) {
         }
 
 
+        if(invincible>=0) {
+            if((invincible/5)%2==1) {
+                p.drawImage(player_x, player_y, player_img);
+            }
+        } else {
+            p.drawImage(player_x, player_y, player_img);
+        }
 
-        p.drawImage(player_x, player_y, player_img);
 
 
         if(start && !pause && !gameover) {
             if(lives==0) {
                 gameover = true;
                 music.stop();
+            } else if(invincible>=0) {
+                invincible++;
+                if(invincible ==50) {
+                    invincible = -1;
+                }
             }
 
             if(moveFrame==0) {
@@ -267,6 +278,11 @@ void MainWindow::paintEvent(QPaintEvent *e) {
             if(ENSHOT_WAIT<=enshot_timer && enemies.size()>0) {
                 if(rand()%100<15+enshot_timer/10) {
                     enemyShoot(enemies[rand()%enemies.size()]);
+                    if(enemyshoot.isFinished()) {
+                        enemyshoot.play();
+                    } else {
+                        enemyshoot.play();
+                    }
                     enshot_timer = 0;
                 } else {
                     enshot_timer++;
@@ -589,9 +605,10 @@ void MainWindow::moveShoot() {
         if(enshots[i].y>gameheight) {
             enshots.erase(enshots.begin()+i);
             i--;
-        } else if(checkEnCollision(&enshots[i])) {
+        } else if(checkEnCollision(&enshots[i]) && invincible == -1) {
             lives--;
             int rando = rand()%4;
+            invincible ++;
             if(rando==1) {
                 if(Hit1.isFinished()) {
                     Hit1.play();
@@ -972,6 +989,8 @@ void MainWindow::mousePressEvent(QMouseEvent *e) {
            player_x = 250;
            lives = 3;
            player_y = gameheight-100;
+           barriers.clear();
+           makeBarriers();
            score = 0;
            donenaming = false;
            naming = false;
