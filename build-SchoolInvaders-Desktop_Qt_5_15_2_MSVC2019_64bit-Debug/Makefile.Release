@@ -19,7 +19,7 @@ CXXFLAGS      = -nologo -Zc:wchar_t -FS -Zc:rvalueCast -Zc:inline -Zc:strictStri
 INCPATH       = -I..\SchoolInvaders -I. -IC:\Qt\5.15.2\msvc2019_64\include -IC:\Qt\5.15.2\msvc2019_64\include\QtMultimedia -IC:\Qt\5.15.2\msvc2019_64\include\QtWidgets -IC:\Qt\5.15.2\msvc2019_64\include\QtGui -IC:\Qt\5.15.2\msvc2019_64\include\QtANGLE -IC:\Qt\5.15.2\msvc2019_64\include\QtNetwork -IC:\Qt\5.15.2\msvc2019_64\include\QtCore -Irelease -I. -I/include -IC:\Qt\5.15.2\msvc2019_64\mkspecs\win32-msvc 
 LINKER        = link
 LFLAGS        = /NOLOGO /DYNAMICBASE /NXCOMPAT /OPT:REF /INCREMENTAL:NO /SUBSYSTEM:WINDOWS "/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'"
-LIBS          = C:\Qt\5.15.2\msvc2019_64\lib\Qt5Multimedia.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Widgets.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Gui.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Network.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Core.lib  C:\Qt\5.15.2\msvc2019_64\lib\qtmain.lib /LIBPATH:C:\openssl\lib /LIBPATH:C:\Utils\my_sql\mysql-5.7.25-winx64\lib /LIBPATH:C:\Utils\postgresql\pgsql\lib shell32.lib 
+LIBS          = C:\Qt\5.15.2\msvc2019_64\lib\Qt5Multimedia.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Widgets.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Gui.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Network.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Core.lib release\SchoolInvaders_resource.res  C:\Qt\5.15.2\msvc2019_64\lib\qtmain.lib /LIBPATH:C:\openssl\lib /LIBPATH:C:\Utils\my_sql\mysql-5.7.25-winx64\lib /LIBPATH:C:\Utils\postgresql\pgsql\lib shell32.lib 
 QMAKE         = C:\Qt\5.15.2\msvc2019_64\bin\qmake.exe
 DEL_FILE      = del
 CHK_DIR_EXISTS= if not exist
@@ -40,7 +40,7 @@ IDC           = idc
 IDL           = midl
 ZIP           = zip -r -9
 DEF_FILE      = 
-RES_FILE      = 
+RES_FILE      = release\SchoolInvaders_resource.res
 SED           = $(QMAKE) -install sed
 MOVE          = move
 
@@ -132,11 +132,14 @@ DESTDIR_TARGET = release\SchoolInvaders.exe
 first: all
 all: Makefile.Release  release\SchoolInvaders.exe
 
-release\SchoolInvaders.exe: C:\Qt\5.15.2\msvc2019_64\lib\Qt5Multimedia.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Widgets.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Gui.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Network.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Core.lib C:\Qt\5.15.2\msvc2019_64\lib\qtmain.lib ui_mainwindow.h $(OBJECTS) 
+release\SchoolInvaders.exe: C:\Qt\5.15.2\msvc2019_64\lib\Qt5Multimedia.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Widgets.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Gui.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Network.lib C:\Qt\5.15.2\msvc2019_64\lib\Qt5Core.lib C:\Qt\5.15.2\msvc2019_64\lib\qtmain.lib ui_mainwindow.h $(OBJECTS) release\SchoolInvaders_resource.res
 	$(LINKER) $(LFLAGS) /MANIFEST:embed /OUT:$(DESTDIR_TARGET) @<<
 release\main.obj release\mainwindow.obj release\moc_mainwindow.obj
 $(LIBS)
 <<
+
+release\SchoolInvaders_resource.res: SchoolInvaders_resource.rc
+	rc /NOLOGO $(DEFINES) -fo release\SchoolInvaders_resource.res SchoolInvaders_resource.rc
 
 qmake: FORCE
 	@$(QMAKE) -o Makefile.Release ..\SchoolInvaders\SchoolInvaders.pro -spec win32-msvc "CONFIG+=debug" "CONFIG+=qml_debug"
@@ -148,6 +151,7 @@ dist:
 
 clean: compiler_clean 
 	-$(DEL_FILE) release\main.obj release\mainwindow.obj release\moc_mainwindow.obj
+	-$(DEL_FILE) release\SchoolInvaders_resource.res
 
 distclean: clean 
 	-$(DEL_FILE) .qmake.stash
@@ -299,6 +303,7 @@ release\moc_mainwindow.cpp: ..\SchoolInvaders\mainwindow.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtMultimedia\qtmultimediaglobal.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtMultimedia\qtmultimedia-config.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtCore\QDebug \
+		C:\Qt\5.15.2\msvc2019_64\include\QtGui\QMouseEvent \
 		release\moc_predefs.h \
 		C:\Qt\5.15.2\msvc2019_64\bin\moc.exe
 	C:\Qt\5.15.2\msvc2019_64\bin\moc.exe $(DEFINES) --compiler-flavor=msvc --include "C:/Users/Nik/OneDrive - Trine University/Documents/Trine/Sophmore Year/Software Engineering/School_Invasion/build-SchoolInvaders-Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/release/moc_predefs.h" -IC:/Qt/5.15.2/msvc2019_64/mkspecs/win32-msvc -I"C:/Users/Nik/OneDrive - Trine University/Documents/Trine/Sophmore Year/Software Engineering/School_Invasion/SchoolInvaders" -IC:/Qt/5.15.2/msvc2019_64/include -IC:/Qt/5.15.2/msvc2019_64/include/QtMultimedia -IC:/Qt/5.15.2/msvc2019_64/include/QtWidgets -IC:/Qt/5.15.2/msvc2019_64/include/QtGui -IC:/Qt/5.15.2/msvc2019_64/include/QtANGLE -IC:/Qt/5.15.2/msvc2019_64/include/QtNetwork -IC:/Qt/5.15.2/msvc2019_64/include/QtCore -I. -I"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\ATLMFC\include" -I"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\include" -I"C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\ucrt" -I"C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\shared" -I"C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\um" -I"C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\winrt" -I"C:\Program Files (x86)\Windows Kits\10\include\10.0.19041.0\cppwinrt" ..\SchoolInvaders\mainwindow.h -o release\moc_mainwindow.cpp
@@ -450,6 +455,7 @@ release\main.obj: ..\SchoolInvaders\main.cpp ..\SchoolInvaders\mainwindow.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtMultimedia\qtmultimediaglobal.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtMultimedia\qtmultimedia-config.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtCore\QDebug \
+		C:\Qt\5.15.2\msvc2019_64\include\QtGui\QMouseEvent \
 		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\QApplication \
 		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\qapplication.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtCore\qcoreapplication.h \
@@ -582,7 +588,24 @@ release\mainwindow.obj: ..\SchoolInvaders\mainwindow.cpp ..\SchoolInvaders\mainw
 		C:\Qt\5.15.2\msvc2019_64\include\QtMultimedia\qtmultimediaglobal.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtMultimedia\qtmultimedia-config.h \
 		C:\Qt\5.15.2\msvc2019_64\include\QtCore\QDebug \
-		ui_mainwindow.h
+		C:\Qt\5.15.2\msvc2019_64\include\QtGui\QMouseEvent \
+		ui_mainwindow.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtCore\QVariant \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\QApplication \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\qapplication.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtCore\qcoreapplication.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtCore\qeventloop.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\qdesktopwidget.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtGui\qguiapplication.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtGui\qinputmethod.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\QMenuBar \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\qmenubar.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\qmenu.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\qaction.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\qactiongroup.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\QStatusBar \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\qstatusbar.h \
+		C:\Qt\5.15.2\msvc2019_64\include\QtWidgets\QWidget
 
 release\moc_mainwindow.obj: release\moc_mainwindow.cpp 
 

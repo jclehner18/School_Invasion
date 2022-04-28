@@ -1,5 +1,7 @@
 Ethan
 12040
+Connor
+11510
 alex
 6650
 Nathan
@@ -16,5 +18,3 @@ Nik
 3520
 JoJo
 3460
-milk
-3450

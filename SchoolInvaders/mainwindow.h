@@ -156,7 +156,7 @@ private:
 
     int cooldown = 0;
     //const int COOLDOWN_LENGTH =1; //Debug timer
-    const int COOLDOWN_LENGTH = 20; //Normal cooldown
+    const int COOLDOWN_LENGTH = 30; //Normal cooldown
 
     enemy special_en;
     int ENEMY_WAIT = 350;  //Amount of frames to wait before another special enemy can be spawned

@@ -176,6 +176,9 @@ void MainWindow::paintEvent(QPaintEvent *e) {
         p.drawText(870, 56, levelstr);
         QString highstr = "High Score: " + QString::fromStdString(to_string(highScores[0]));
         p.drawText(400, 56, highstr);
+        QString lifes = "Lives: " + QString::fromStdString(to_string(lives));
+        p.setPen(Qt::black);
+        p.drawText(80, height()-7, lifes);
 
 
         //Draw Barriers
@@ -501,7 +504,7 @@ void MainWindow::makeLevel() {
         enemies.push_back(makeEnemy(&Woolverton, &Woolverton_rev, i*70+70, 400, 10));
     }
     level++;
-    movement = 50/2-level*4;
+    movement = 50/2-level*6;
     if(movement<5) {
         movement = 5;
     }
@@ -542,9 +545,9 @@ void MainWindow::moveEnemies() {
     } else {
         for(int i = 0; i<enemies.size(); i++) {
             if(leftdir) {
-                enemies[i].x -=5;
+                enemies[i].x -=9;
             } else {
-                enemies[i].x+=5;
+                enemies[i].x+=9;
             }
             if((enemies[i].x<=leftboundry &&leftdir) || (enemies[i].x+enemies[i].height>=rightboundry&&!leftdir)) {
                 enemiesDown = true;
